@@ -1,10 +1,35 @@
 const BASE_URL = import.meta.env.VITE_API_URL ?? "";
 
-// -- Types (mirror backend schemas) --
+// -- Envelope types --
+
+export interface ApiResponse<T> {
+  data: T;
+}
+
+export interface IndexStatusMeta {
+  total_items: number;
+  total_chunks: number;
+}
+
+export interface ApiListResponse<T> {
+  data: T[];
+  meta: IndexStatusMeta;
+}
+
+export interface ApiErrorResponse {
+  detail: string;
+  error_code: string;
+  details: Record<string, unknown> | null;
+}
+
+// -- Domain types (mirror backend schemas) --
 
 export interface IndexResponse {
-  status: string;
   documents_indexed: number;
+}
+
+export interface ClearResponse {
+  cleared: boolean;
 }
 
 export interface IndexSourceInfo {
@@ -68,7 +93,8 @@ export async function indexCodebaseZip(
     body: formData,
   });
 
-  return parseJsonResponse<IndexResponse>(response);
+  const envelope = await parseJsonResponse<ApiResponse<IndexResponse>>(response);
+  return envelope.data;
 }
 
 export async function indexDocuments(
@@ -84,15 +110,20 @@ export async function indexDocuments(
     body: formData,
   });
 
-  return parseJsonResponse<IndexResponse>(response);
+  const envelope = await parseJsonResponse<ApiResponse<IndexResponse>>(response);
+  return envelope.data;
 }
 
 export async function getIndexStatus(
   sessionId: string
 ): Promise<IndexStatusResponse> {
-  return request<IndexStatusResponse>(
+  const envelope = await request<ApiListResponse<IndexSourceInfo>>(
     `/api/v1/index/status?session_id=${encodeURIComponent(sessionId)}`
   );
+  return {
+    sources: envelope.data,
+    total_chunks: envelope.meta.total_chunks,
+  };
 }
 
 export async function clearIndex(sessionId: string): Promise<void> {
@@ -104,14 +135,15 @@ export async function clearIndex(sessionId: string): Promise<void> {
     body: formData,
   });
 
-  await parseJsonResponse<unknown>(response);
+  await parseJsonResponse<ApiResponse<ClearResponse>>(response);
 }
 
-export function sendMessage(req: ChatRequest): Promise<ChatResponse> {
-  return request<ChatResponse>("/api/v1/chat", {
+export async function sendMessage(req: ChatRequest): Promise<ChatResponse> {
+  const envelope = await request<ApiResponse<ChatResponse>>("/api/v1/chat", {
     method: "POST",
     body: JSON.stringify(req),
   });
+  return envelope.data;
 }
 
 export function checkHealth(): Promise<HealthResponse> {
