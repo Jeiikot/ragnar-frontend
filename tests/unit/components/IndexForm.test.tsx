@@ -42,7 +42,6 @@ describe("IndexForm", () => {
 
   it("submits code indexing with selected zip", async () => {
     mockIndexCodebaseZip.mockResolvedValue({
-      status: "ok",
       documents_indexed: 42,
     });
 
@@ -58,7 +57,6 @@ describe("IndexForm", () => {
 
   it("shows success message with chunk count", async () => {
     mockIndexCodebaseZip.mockResolvedValue({
-      status: "ok",
       documents_indexed: 42,
     });
 
@@ -94,7 +92,6 @@ describe("IndexForm", () => {
 
   it("switches to documents mode and submits with document file", async () => {
     mockIndexDocuments.mockResolvedValue({
-      status: "ok",
       documents_indexed: 7,
     });
 

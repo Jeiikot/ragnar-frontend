@@ -25,8 +25,10 @@ describe("useChat", () => {
       ok: true,
       json: () =>
         Promise.resolve({
-          answer: "The auth module uses JWT",
-          sources: ["auth.py:15"],
+          data: {
+            answer: "The auth module uses JWT",
+            sources: ["auth.py:15"],
+          },
         }),
     });
 
@@ -56,7 +58,12 @@ describe("useChat", () => {
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
-      json: () => Promise.resolve({ detail: "LLM down" }),
+      json: () =>
+        Promise.resolve({
+          detail: "LLM down",
+          error_code: "CHAT_FAILED",
+          details: null,
+        }),
     });
 
     const { result } = renderHook(() => useChat(sessionId));
@@ -72,7 +79,7 @@ describe("useChat", () => {
   it("clears chat messages and resets error", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ answer: "test", sources: [] }),
+      json: () => Promise.resolve({ data: { answer: "test", sources: [] } }),
     });
 
     const { result } = renderHook(() => useChat(sessionId));
